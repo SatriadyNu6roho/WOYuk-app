@@ -29,6 +29,29 @@ class DashboardController extends Controller
             ['current_streak' => 0, 'longest_streak' => 0]
         );
 
+        // ==========================================
+        // LOGIKA BARU: STATUS STREAK (AKTIF / TIDUR / HANGUS)
+        // ==========================================
+        $lastDate = $streak->last_qualifying_date 
+            ? Carbon::parse($streak->last_qualifying_date, $userTimezone)->toDateString() 
+            : null;
+            
+        $today = Carbon::now($userTimezone)->toDateString();
+        $yesterday = Carbon::yesterday($userTimezone)->toDateString();
+        $twoDaysAgo = Carbon::now($userTimezone)->subDays(2)->toDateString();
+
+        $streakStatus = 'active'; // Default
+        $displayStreak = $streak->current_streak;
+
+        if ($lastDate === $twoDaysAgo) {
+            // Terakhir olahraga kemarin lusa = Sedang Tidur (Recovery)
+            $streakStatus = 'sleeping';
+        } elseif ($lastDate !== null && $lastDate < $twoDaysAgo) {
+            // Bolos lebih dari 1 hari = Hangus
+            $streakStatus = 'broken';
+            $displayStreak = 0; // Di UI tampilkan 0
+        }
+
         $target = $user->activeTarget ?? ActivityTarget::firstOrCreate(
             ['user_id' => $user->id],
             ['daily_distance_km' => 5.00, 'daily_calories' => 300, 'is_active' => true]
@@ -70,6 +93,9 @@ class DashboardController extends Controller
         }
 
         $sports = SportSelectorService::getAllConfigs();
+
+        // TANGKAP FLASH SESSION MILESTONE STREAK (10, 50, 100)
+        $streakMilestone = session('streak_milestone_achieved');
 
         // Agregasi Data Histori Permingguan (4 Minggu Terakhir)
         $weeklyHistory = [];
@@ -139,6 +165,8 @@ class DashboardController extends Controller
         return view('dashboard', compact(
             'user',
             'streak',
+            'streakStatus',    // <-- DILEMPAR KE VIEW
+            'displayStreak',   // <-- DILEMPAR KE VIEW
             'target',
             'todayDistanceKm',
             'todayCalories',
@@ -151,7 +179,8 @@ class DashboardController extends Controller
             'isBothAchieved',
             'targetAchievedType',
             'sports',
-            'weeklyHistory'
+            'weeklyHistory',
+            'streakMilestone'
         ));
     }
 

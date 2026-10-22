@@ -57,6 +57,37 @@
         pointer-events: none;
         animation: glitterSparkle 1.8s infinite ease-in-out;
     }
+
+    /* === ANIMASI MODAL MILESTONE STREAK === */
+    @keyframes modalPop {
+        0% { transform: scale(0.8); opacity: 0; }
+        50% { transform: scale(1.05); opacity: 1; }
+        100% { transform: scale(1); opacity: 1; }
+    }
+    .animate-modal-pop {
+        animation: modalPop 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+    }
+    @keyframes iconBounce {
+        0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
+        40% { transform: translateY(-20px); }
+        60% { transform: translateY(-10px); }
+    }
+    .animate-icon-bounce {
+        animation: iconBounce 1.5s infinite;
+    }
+
+    /* === ANIMASI ZZZ UNTUK STREAK TIDUR === */
+    @keyframes floatZzz {
+        0% { transform: translateY(0) scale(1); opacity: 0; }
+        20% { opacity: 1; }
+        100% { transform: translateY(-30px) scale(1.5); opacity: 0; }
+    }
+    .animate-float-zzz {
+        animation: floatZzz 2.5s ease-in-out infinite;
+    }
+    .zzz-delay-1 { animation-delay: 0s; }
+    .zzz-delay-2 { animation-delay: 0.8s; }
+    .zzz-delay-3 { animation-delay: 1.6s; }
 </style>
 @endpush
 
@@ -66,7 +97,8 @@
 <!-- ALERT FLOATING MINIMALIS -->
 @if(session('warning') || session('errors') || session('success'))
     @php
-        $alertType = session('success') ? 'success' : (session('warning') ? 'warning' : 'error');$alertMessage = session('success') ?? (session('warning') ?? session('errors')->first());
+        $alertType = session('success') ? 'success' : (session('warning') ? 'warning' : 'error');
+        $alertMessage = session('success') ?? (session('warning') ?? session('errors')->first());
     @endphp
 
     <div id="flash-alert" class="fixed top-20 left-1/2 -translate-x-1/2 z-[9999] w-full max-w-md px-4 transition-all duration-500 ease-in-out">
@@ -87,6 +119,52 @@
         </div>
     </div>
 @endif
+
+@php
+    $currentStreak = $displayStreak ?? ($user->streak->current_streak ?? 0);
+    $longestStreak = $user->streak->longest_streak ?? 0;
+    
+    // Default Warna (1-9): Biru / Cyan
+    $colorBg = 'bg-gradient-to-br from-cyan-500 to-blue-600';
+    $colorText = 'text-cyan-400';
+    $colorBar = 'bg-gradient-to-r from-cyan-600 to-blue-400';
+    $glowClass = 'shadow-[0_0_20px_rgba(6,182,212,0.4)] border-cyan-500/30';
+
+    if ($streakStatus === 'sleeping') {
+        // TIDUR / RECOVERY: Abu-abu
+        $colorBg = 'bg-gradient-to-br from-gray-600 to-gray-800';
+        $colorText = 'text-gray-400';
+        $colorBar = 'bg-gradient-to-r from-gray-600 to-gray-500';
+        $glowClass = 'shadow-[0_0_20px_rgba(107,114,128,0.3)] border-gray-600/30';
+    } elseif ($streakStatus === 'broken') {
+        // HANGUS: Merah
+        $colorBg = 'bg-gradient-to-br from-red-600 to-rose-800';
+        $colorText = 'text-red-500';
+        $colorBar = 'bg-gradient-to-r from-red-600 to-rose-500';
+        $glowClass = 'shadow-[0_0_20px_rgba(239,68,68,0.3)] border-red-600/30';
+    } elseif ($currentStreak >= 100) {
+        // 100+ Ungu / Purple
+        $colorBg = 'bg-gradient-to-br from-purple-500 to-fuchsia-600';
+        $colorText = 'text-purple-400';
+        $colorBar = 'bg-gradient-to-r from-purple-600 to-fuchsia-400';
+        $glowClass = 'shadow-[0_0_20px_rgba(168,85,247,0.4)] border-purple-500/30';
+    } elseif ($currentStreak >= 50) {
+        // 50-99 Orange
+        $colorBg = 'bg-gradient-to-br from-orange-500 to-amber-600';
+        $colorText = 'text-orange-400';
+        $colorBar = 'bg-gradient-to-r from-orange-600 to-amber-400';
+        $glowClass = 'shadow-[0_0_20px_rgba(249,115,22,0.4)] border-orange-500/30';
+    } elseif ($currentStreak >= 10) {
+        // 10-49 Hijau / Emerald
+        $colorBg = 'bg-gradient-to-br from-emerald-500 to-teal-600';
+        $colorText = 'text-emerald-400';
+        $colorBar = 'bg-gradient-to-r from-emerald-600 to-teal-400';
+        $glowClass = 'shadow-[0_0_20px_rgba(16,185,129,0.4)] border-emerald-500/30';
+    }
+
+    // Kalkulasi persentase bar (Maksimal 100%)
+    $progressPercent = min(100, $currentStreak);
+@endphp
 
 <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 space-y-8 sm:space-y-10 pb-44 relative">
 
@@ -109,25 +187,87 @@
         </div>
 
         <div class="lg:col-span-6">
-            <div class="glass-card-dark p-4 sm:p-5 rounded-3xl border border-gray-800/90 flex items-center justify-between shadow-xl h-full">
-                <div class="flex items-center gap-3 sm:gap-4">
-                    <div id="streak-icon-bg" class="w-10 h-10 sm:w-12 sm:h-12 rounded-2xl bg-gradient-to-br from-cyan-500 to-blue-600 flex items-center justify-center text-white shadow-lg transition-all duration-500 flex-shrink-0">
-                        <svg class="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
-                        </svg>
-                    </div>
-                    <div>
-                        <div class="text-[9px] sm:text-[10px] font-bold text-gray-400 uppercase tracking-widest">STREAK AKTIF</div>
-                        <div class="text-xl sm:text-2xl font-black text-white italic tracking-wider font-mono">
-                            {{ $user->streak->current_streak ?? 0 }} <span class="text-[10px] sm:text-xs font-normal text-cyan-400 uppercase">HARI</span>
+            <!-- UI STREAK BARU DENGAN DYNAMIC COLOR & BATTERY STATUS -->
+            <div class="glass-card-dark p-5 sm:p-6 rounded-3xl border {{ $glowClass }} flex flex-col justify-center shadow-xl h-full transition-all duration-500 relative overflow-visible">
+                
+                <div class="flex items-center justify-between relative">
+                    <div class="flex items-center gap-3 sm:gap-4 relative">
+                        <!-- Ikon Dinamis -->
+                        <div class="w-10 h-10 sm:w-12 sm:h-12 rounded-2xl {{ $colorBg }} flex items-center justify-center text-white shadow-lg transition-all duration-500 flex-shrink-0 relative">
+                            <svg class="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
+                            </svg>
+                            
+                            <!-- ANIMASI ZZZ JIKA TIDUR -->
+                            @if($streakStatus === 'sleeping')
+                                <div class="absolute -top-3 -right-4 pointer-events-none">
+                                    <span class="absolute text-[10px] font-black text-gray-400 animate-float-zzz zzz-delay-1">Z</span>
+                                    <span class="absolute left-2 -top-2 text-[12px] font-black text-gray-300 animate-float-zzz zzz-delay-2">Z</span>
+                                    <span class="absolute left-4 -top-4 text-[14px] font-black text-gray-200 animate-float-zzz zzz-delay-3">Z</span>
+                                </div>
+                            @endif
+                        </div>
+                        
+                        <div>
+                            <div class="text-[9px] sm:text-[10px] font-bold text-gray-400 uppercase tracking-widest flex items-center gap-2">
+                                @if($streakStatus === 'sleeping')
+                                    <span class="text-gray-400">STREAK RECOVERY</span>
+                                    <span class="bg-gray-800 text-gray-300 px-1.5 py-0.5 rounded text-[8px] animate-pulse">TIDUR</span>
+                                @elseif($streakStatus === 'broken')
+                                    <span class="text-red-400">STREAK TERPUTUS</span>
+                                @else
+                                    STREAK AKTIF
+                                @endif
+                            </div>
+                            <div class="text-xl sm:text-2xl font-black text-white italic tracking-wider font-mono">
+                                {{ $currentStreak }} <span class="text-[10px] sm:text-xs font-normal {{ $colorText }} uppercase">HARI</span>
+                            </div>
+                            
+                            <!-- Peringatan Kecil -->
+                            @if($streakStatus === 'sleeping')
+                                <div class="text-[9px] text-gray-400 mt-0.5 italic">Ayo olahraga hari ini biar bangun!</div>
+                            @elseif($streakStatus === 'broken')
+                                <div class="text-[9px] text-red-400 mt-0.5 italic">Mulai dari awal lagi ya.</div>
+                            @endif
                         </div>
                     </div>
+                    
+                    <div class="text-right border-l border-gray-800/80 pl-4 sm:pl-6">
+                        <div class="text-[8px] sm:text-[9px] text-gray-500 uppercase tracking-wider">REKOR TERTINGGI</div>
+                        <div class="text-xs sm:text-sm font-bold text-gray-200 font-mono">{{ $longestStreak }} HARI</div>
+                    </div>
                 </div>
-                <div class="text-right border-l border-gray-800/80 pl-4 sm:pl-6">
-                    <div class="text-[8px] sm:text-[9px] text-gray-500 uppercase tracking-wider">REKOR TERTINGGI</div>
-                    <div class="text-xs sm:text-sm font-bold text-gray-200 font-mono">{{ $user->streak->longest_streak ?? 0 }} HARI</div>
+
+                <!-- BATTERY STATUS BAR & MILESTONE TOOLTIP -->
+                <div class="mt-8 relative px-1">
+                    <!-- Tooltip Penanda Milestone -->
+                    <div class="absolute -top-5 left-[10%] -translate-x-1/2 flex flex-col items-center">
+                        <span class="text-[10px] font-black {{ $currentStreak >= 10 ? 'text-emerald-400' : 'text-gray-500' }}">10</span>
+                        <div class="w-1.5 h-1.5 rounded-full {{ $currentStreak >= 10 ? 'bg-emerald-500' : 'bg-gray-700' }} mt-0.5"></div>
+                    </div>
+                    <div class="absolute -top-5 left-[50%] -translate-x-1/2 flex flex-col items-center">
+                        <span class="text-[10px] font-black {{ $currentStreak >= 50 ? 'text-orange-400' : 'text-gray-500' }}">50</span>
+                        <div class="w-1.5 h-1.5 rounded-full {{ $currentStreak >= 50 ? 'bg-orange-500' : 'bg-gray-700' }} mt-0.5"></div>
+                    </div>
+                    <div class="absolute -top-5 left-[100%] -translate-x-1/2 flex flex-col items-center">
+                        <span class="text-[10px] font-black {{ $currentStreak >= 100 ? 'text-purple-400' : 'text-gray-500' }}">100+</span>
+                        <div class="w-1.5 h-1.5 rounded-full {{ $currentStreak >= 100 ? 'bg-purple-500' : 'bg-gray-700' }} mt-0.5"></div>
+                    </div>
+
+                    <!-- Garis Progress (Battery) -->
+                    <div class="w-full h-3 bg-gray-900 rounded-full overflow-hidden border border-gray-800 relative z-10 shadow-inner">
+                        <div class="h-full {{ $colorBar }} transition-all duration-1000 ease-out relative" style="width: {{ $progressPercent }}%;">
+                            <!-- Efek kilau di ujung bar -->
+                            <div class="absolute top-0 right-0 bottom-0 w-4 bg-white/20 blur-sm"></div>
+                        </div>
+                    </div>
+                    
+                    <!-- Garis Pembatas Vertikal (Divider) -->
+                    <div class="absolute top-0 bottom-0 left-[10%] w-px bg-white/20 z-20 pointer-events-none"></div>
+                    <div class="absolute top-0 bottom-0 left-[50%] w-px bg-white/20 z-20 pointer-events-none"></div>
                 </div>
+
             </div>
         </div>
     </div>
@@ -286,39 +426,6 @@
 
 </main>
 
-<!-- FLOATING SPORT SELECTOR -->
-<div class="fixed bottom-20 md:bottom-6 inset-x-0 mx-auto z-40 w-max max-w-[95vw]">
-    <div class="bg-gray-950/90 backdrop-blur-xl p-1.5 rounded-2xl border border-gray-800/90 shadow-2xl">
-        <div class="flex items-center justify-center gap-1.5 text-xs font-bold uppercase tracking-wider" id="sport-selector">
-
-            <button type="button" onclick="selectSport('running')" id="tab-running"
-                class="sport-tab py-2.5 px-4 rounded-xl transition-all duration-300 flex items-center justify-center gap-2 text-white font-black bg-cyan-600 shadow-md cursor-pointer">
-                <svg id="icon-running" class="w-4 h-4 flex-shrink-0 text-white transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 10V3L4 14h7v7l9-11h-7z"/>
-                </svg>
-                <span class="tab-label inline text-xs">Lari</span>
-            </button>
-
-            <button type="button" onclick="selectSport('walking')" id="tab-walking"
-                class="sport-tab py-2.5 px-3 rounded-xl transition-all duration-300 flex items-center justify-center gap-2 text-white font-black bg-transparent hover:bg-gray-800/50 cursor-pointer">
-                <svg id="icon-walking" class="w-4 h-4 flex-shrink-0 text-white transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/>
-                </svg>
-                <span class="tab-label hidden text-xs">Jalan</span>
-            </button>
-
-            <button type="button" onclick="selectSport('cycling')" id="tab-cycling"
-                class="sport-tab py-2.5 px-3 rounded-xl transition-all duration-300 flex items-center justify-center gap-2 text-white font-black bg-transparent hover:bg-gray-800/50 cursor-pointer">
-                <svg id="icon-cycling" class="w-4 h-4 flex-shrink-0 text-white transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                </svg>
-                <span class="tab-label hidden text-xs">Bersepeda</span>
-            </button>
-
-        </div>
-    </div>
-</div>
-
 <!-- MODAL UPDATE TARGET -->
 <div id="target-modal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md hidden">
     <div class="glass-card-dark max-w-md w-full p-6 rounded-3xl border border-gray-800 space-y-5">
@@ -349,10 +456,52 @@
     </div>
 </div>
 
+<!-- ==================== MODAL MILESTONE STREAK BARU ==================== -->
+<div id="streak-milestone-modal" class="fixed inset-0 z-[9990] flex items-center justify-center p-4 bg-black/85 backdrop-blur-md hidden transition-all duration-300">
+    <div class="bg-gradient-to-b from-gray-900 to-gray-950 border border-gray-700 max-w-sm w-full rounded-[2rem] p-8 text-center space-y-6 shadow-2xl relative overflow-hidden transform scale-90 opacity-0 transition-all duration-500" id="streak-milestone-content">
+        
+        <!-- Glow Effect di belakang ikon -->
+        <div class="absolute top-0 left-1/2 -translate-x-1/2 w-48 h-48 bg-orange-500/20 blur-3xl rounded-full pointer-events-none"></div>
+
+        <!-- Ikon Badge -->
+        <div class="relative mx-auto w-24 h-24 rounded-full bg-gradient-to-tr from-gray-800 to-gray-900 border-4 border-gray-700 flex items-center justify-center shadow-lg animate-icon-bounce" id="streak-milestone-icon-wrapper">
+            <svg id="streak-milestone-icon" class="w-12 h-12 text-orange-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+            </svg>
+        </div>
+
+        <!-- Teks -->
+        <div class="space-y-2 relative z-10">
+            <div class="text-[10px] font-black uppercase tracking-widest text-orange-400 mb-1">PENCAPAIAN MILESTONE</div>
+            <h2 class="text-3xl font-black italic text-white uppercase tracking-wider">
+                STREAK <span id="milestone-number" class="text-orange-400"></span> HARI!
+            </h2>
+            <p class="text-sm text-gray-300 leading-relaxed font-medium">
+                Luar biasa! Sampeyan berhasil konsisten olahraga tanpa putus. Terus jaga semangat e!
+            </p>
+        </div>
+
+        <!-- Tombol Aksi -->
+        <div class="space-y-3 pt-2 relative z-10">
+            <button type="button" onclick="shareStreakMilestone()" class="w-full py-3 bg-gradient-to-r from-orange-600 to-amber-500 hover:from-orange-500 hover:to-amber-400 text-white font-black text-sm uppercase tracking-widest rounded-xl shadow-lg transition-all active:scale-95 flex items-center justify-center gap-2 cursor-pointer">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"/>
+                </svg>
+                BAGIKAN
+            </button>
+            <button type="button" onclick="closeMilestoneModal()" class="w-full py-2.5 bg-transparent hover:bg-gray-800 text-gray-400 hover:text-white font-bold text-xs uppercase tracking-widest rounded-xl transition-all cursor-pointer">
+                Tutup
+            </button>
+        </div>
+    </div>
+</div>
+
 @push('scripts')
 <script>
     let activeSport = 'running';
     const targetAchievedType = @json($targetAchievedType);
+    // Milestone streak (berisi angka 10/50/100 atau null)
+    const streakMilestone = @json($streakMilestone ?? null);
 
     const sportThemes = {
         running: {
@@ -526,6 +675,75 @@
         animate();
     }
 
+    // === LOGIKA MODAL MILESTONE STREAK ===
+    
+    function openMilestoneModal(milestone) {
+        const modal = document.getElementById('streak-milestone-modal');
+        const content = document.getElementById('streak-milestone-content');
+        const numberEl = document.getElementById('milestone-number');
+        const iconWrapper = document.getElementById('streak-milestone-icon-wrapper');
+        const iconSvg = document.getElementById('streak-milestone-icon');
+
+        // Set Angka
+        numberEl.innerText = milestone;
+
+        // Sesuaikan Warna Icon & Glow Berdasarkan Milestone
+        if (milestone >= 100) {
+            numberEl.className = 'text-purple-400';
+            iconWrapper.className = 'relative mx-auto w-24 h-24 rounded-full bg-gradient-to-tr from-gray-800 to-gray-900 border-4 border-purple-500/50 flex items-center justify-center shadow-[0_0_30px_rgba(168,85,247,0.5)] animate-icon-bounce';
+            iconSvg.className = 'w-12 h-12 text-purple-400';
+        } else if (milestone >= 50) {
+            numberEl.className = 'text-orange-400';
+            iconWrapper.className = 'relative mx-auto w-24 h-24 rounded-full bg-gradient-to-tr from-gray-800 to-gray-900 border-4 border-orange-500/50 flex items-center justify-center shadow-[0_0_30px_rgba(249,115,22,0.5)] animate-icon-bounce';
+            iconSvg.className = 'w-12 h-12 text-orange-400';
+        } else {
+            numberEl.className = 'text-emerald-400';
+            iconWrapper.className = 'relative mx-auto w-24 h-24 rounded-full bg-gradient-to-tr from-gray-800 to-gray-900 border-4 border-emerald-500/50 flex items-center justify-center shadow-[0_0_30px_rgba(16,185,129,0.5)] animate-icon-bounce';
+            iconSvg.className = 'w-12 h-12 text-emerald-400';
+        }
+
+        modal.classList.remove('hidden');
+        
+        // Trigger animasi pop-up
+        setTimeout(() => {
+            content.classList.remove('scale-90', 'opacity-0');
+            content.classList.add('scale-100', 'opacity-100');
+        }, 50);
+    }
+
+    function closeMilestoneModal() {
+        const modal = document.getElementById('streak-milestone-modal');
+        const content = document.getElementById('streak-milestone-content');
+        
+        content.classList.remove('scale-100', 'opacity-100');
+        content.classList.add('scale-90', 'opacity-0');
+        
+        setTimeout(() => {
+            modal.classList.add('hidden');
+        }, 300);
+    }
+
+    function shareStreakMilestone() {
+        const text = `Pencapaian Baru! Aku berhasil menjaga konsistensi olahraga selama ${streakMilestone} hari berturut-turut di WOYuk! 🏃‍♂️🔥 Ayo obah bareng!`;
+        const url = window.location.origin;
+
+        if (navigator.share) {
+            navigator.share({
+                title: 'Pencapaian Streak WOYuk!',
+                text: text,
+                url: url
+            }).then(() => {
+                console.log('Berhasil dibagikan');
+            }).catch((error) => {
+                console.error('Gagal membagikan', error);
+            });
+        } else {
+            // Fallback ke WA jika browser tidak mendukung (PC/Laptop)
+            const waUrl = `https://api.whatsapp.com/send?text=${encodeURIComponent(text + ' ' + url)}`;
+            window.open(waUrl, '_blank');
+        }
+    }
+
     document.addEventListener("DOMContentLoaded", function () {
         const alertEl = document.getElementById('flash-alert');
         if (alertEl) {
@@ -539,6 +757,16 @@
             setTimeout(() => {
                 triggerCelebrationAnimation(targetAchievedType);
             }, 600);
+        }
+
+        // PICULAH MODAL STREAK JIKA MILESTONE TERCAPAI HARI INI
+        if (streakMilestone) {
+            setTimeout(() => {
+                // Jalankan confetti
+                triggerCelebrationAnimation('both'); 
+                // Munculkan modal
+                openMilestoneModal(streakMilestone);
+            }, 800);
         }
     });
 </script>

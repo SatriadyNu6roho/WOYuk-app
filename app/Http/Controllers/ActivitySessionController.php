@@ -79,7 +79,13 @@ class ActivitySessionController extends Controller
 
             if (isset($result['isValid']) && $result['isValid']) {
                 // Pembaruan streak otomatis saat aktivitas valid
-                StreakService::updateStreak($activity->user_id);
+                // Tangkap return value untuk cek milestone (10, 50, 100)
+                $milestoneAchieved = StreakService::updateStreak($activity->user_id);
+                
+                if ($milestoneAchieved !== null) {
+                    // Simpan ke flash session agar muncul sekali di halaman selanjutnya
+                    session()->flash('streak_milestone_achieved', $milestoneAchieved);
+                }
 
                 // Cek ketercapaian target harian setelah sesi ini rampung
                 $user = auth()->user();
@@ -137,8 +143,9 @@ class ActivitySessionController extends Controller
                 ->get(['latitude', 'longitude']);
 
             $targetAchievedType = session('target_just_achieved');
+            $streakMilestone = session('streak_milestone_achieved'); // Ambil data milestone
 
-            return view('activity.result', compact('activity', 'sportConfig', 'user', 'points', 'targetAchievedType'));
+            return view('activity.result', compact('activity', 'sportConfig', 'user', 'points', 'targetAchievedType', 'streakMilestone'));
         } catch (Exception $e) {
             Log::error('Error menampilkan hasil aktivitas ID ' . $id . ': ' . $e->getMessage());
             return redirect()->route('dashboard')->with('warning', 'Data hasil aktivitas tidak ditemukan.');
